@@ -97,8 +97,8 @@ Learning when to seek help (and when not to) is part of the assignment.
 \end{wrapfigure}
 
 \textbf{Welcome to Advanced Systems Programming 2026!}
-This assignment introduces you to a real-world codebase called \texttt{CAF} (Content Addressable Filesystem) — a lightweight version control system similar to Git, written in Python and C++.
-\texttt{CAF} was thoughtfully developed by previous students (Meshi, Bar, and Omer) and serves as your gateway to understanding how complex systems are architected, implemented, and maintained.
+This assignment introduces you to a real-world codebase called CAF (Content Addressable Filesystem), a lightweight version control system similar to git, written in Python and C++.
+CAF was thoughtfully developed by previous students (Meshi, Bar, and Omer) and serves as your gateway to understanding how complex systems are architected, implemented, and maintained.
 Though it may appear modest in scale, CAF contains the same fundamental challenges found in production systems: command line interfaces, state management, file operations, data integrity, and more.
 Through this project, you'll develop essential skills in code analysis, system design, debugging, and feature implementation.
 You'll learn not just how real-world systems work, but why they're designed the way they are.
@@ -108,7 +108,7 @@ You'll learn not just how real-world systems work, but why they're designed the 
 \begin{itemize}
     \item Basic familiarity with Python and C++
     \item Docker installed and functional
-    \item Git basics (clone, commit, push)
+    \item git basics (clone, commit, push)
     \item Command-line comfort
 \end{itemize}
 
@@ -181,8 +181,8 @@ For each significant file or logical group of files, provide:
 \begin{itemize}
     \item Core source files (Python/C++ modules with >20 lines)
     \item Configuration files (Makefile, Dockerfile, setup files)
-    \item Test files and test data
-    \item You may exclude: temporary files, \texttt{\_\_pycache\_\_}, basic \texttt{.gitignore},
+    \item Test files and test infrastructure
+    \item You may exclude: temporary files, \texttt{\_\_pycache\_\_}, \texttt{.gitignore},
           and other files that do not contribute to the project's functionality or structure.
 \end{itemize}
 
@@ -196,12 +196,12 @@ It does not have to be this detailed, but it should show that you have thought a
     \item \texttt{caf/caf/\_\_main\_\_.py:} This file serves as the application entry point, enabling CAF to run as both a module (\texttt{python -m caf}) and installed command (\texttt{caf}). It leverages Python's \texttt{\_\_name\_\_} mechanism to detect script execution and delegates to the CLI module.
           This separation keeps the main logic in cli.py while providing multiple execution pathways.
     \item \texttt{caf/caf/cli.py:}
-          This file contains the command-line interface (CLI) for the CAF application.
+          This file implements the command-line interface (CLI) for the CAF application.
           It defines the commands and options available to users, such as \texttt{init}, \texttt{commit}, and others.
           The CLI is built using the \texttt{argparse} library, which simplifies the creation of command-line interfaces in Python.
           The \texttt{cli()} function is called from \texttt{\_\_main\_\_.py}.
           It uses a data structure that describes each command, its options, and its arguments to dispatch the appropriate function when a command is invoked.
-          Actual command implementations live in \texttt{cli\_commands.py} file.
+          Actual command implementations live in \texttt{cli\_commands.py}.
 \end{enumerate}
 
 \textbf{Tips:}
@@ -273,7 +273,6 @@ This will help you see how the pieces fit together and make you more effective i
 Your map should reflect your own understanding.
 Do not simply copy output from an AI tool or documentation generation tool!
 
-\textbf{Grading:} This part will be graded competitively, comparing the quality of your diagram to others.
 The best diagrams will be those that clearly and accurately represent the system architecture, show deep understanding of the codebase, and are visually appealing.
 It might be included in future course materials, so make it your best work!
 
@@ -295,7 +294,7 @@ The more clearly you can see how the pieces fit together, the more effective you
 
 Now that you have explored the codebase and mapped its structure, your next step is to get the project running on your own machine.
 We use Docker, which simplifies the setup of a consistent development environment.
-This ensures you can bring the project to life and begin experimenting with it.
+This ensures you can bring the project to life and begin experimenting with it easily.
 
 \textbf{Objective:} Set up the development environment and run the test suite.
 
@@ -316,7 +315,7 @@ Part of the assignment is learning to how to solve problems yourself, and also w
 \textbf{Testing the application:}
 \vspace{-1em}
 \begin{enumerate}
-    \item Run \texttt{pytest -v} to see detailed test results
+    \item Run \texttt{pytest} to see detailed test results
     \item Record which tests pass/fail with exact counts
     \item For failing tests, note the error messages
     \item Test basic CLI functionality manually (e.g., \texttt{caf --help})
@@ -349,7 +348,7 @@ Focus on understanding the intent of the code and tests, and make thoughtful, mi
     \item \textbf{Analyze:} Read test code to understand expected behavior
     \item \textbf{Investigate:} Trace through application code to find the issue, perhaps using print statements or a debugger
     \item \textbf{Hypothesize:} Form a theory about the root cause
-    \item \textbf{Fix:} Make minimal, targeted changes to application code
+    \item \textbf{Fix:} Make minimal, targeted changes to the application or test code as needed
     \item \textbf{Verify:} Re-run tests to confirm the fix
 \end{enumerate}
 
@@ -360,11 +359,13 @@ Understanding why each test fails is crucial to developing effective debugging s
 
 \vspace{-1em}
 \begin{itemize}
-    \item Some tests fail because they correctly verify correct behavior that the current implementation does not properly handle.
+    \item Some tests fail because they correctly verify behavior that the current implementation does not properly handle.
+          The test is valid, but the code has a bug.
           In cases like these, your task is to \textbf{fix the underlying code} to make the invariants tested by the tests hold true.
 
-    \item Some tests fail due to relying on details that they should not be relying on, meaning that the test isn't robust in the face of changes.
-          While you could fix the code to match the expected order, the real challenge is to \textbf{make this test robust to changes and less reliant on irrelevant details} by modifying the test itself.
+    \item Some tests fail due to relying on details that they should not be relying on.
+          The test simply isn't robust in the face of changes.
+          While you could fix the code to match the expected outcome, the proper fix is to \textbf{make the test less reliant on irrelevant details} by modifying the test itself.
 \end{itemize}
 
 \textbf{Important constraints:}
@@ -381,7 +382,7 @@ Understanding why each test fails is crucial to developing effective debugging s
 \vspace{-1em}
 \begin{itemize}
     \item Add print statements to trace execution
-    \item Use the Python debugger (\texttt{pdb}), PyCharm, VS Code, etc
+    \item Use the Python debugger in PyCharm, VS Code, or the command line (\texttt{pdb})
     \item Verify assumptions about data structures and types
 \end{itemize}
 
@@ -392,7 +393,7 @@ For each fix you made:
     \item Test name(s) and original failure reason(s)
     \item Your analysis of the root cause
     \item Brief description of the specific code changes you made
-    \item Verification that the fix works and the tests now pass
+    \item Verification that the fix works and the tests now pass (for example, a screenshot of the passing test suite)
     \item Any remaining issues, partial solutions or challenges you faced
     \item Include a link to a GitHub branch or pull request that shows your changes, and provide a written explanation in your submission
 \end{itemize}
@@ -409,31 +410,31 @@ For each fix you made:
     \includegraphics[width=64px]{assets/tag}
 \end{wrapfigure}
 
-Your next challenge is to extend the CAF project by implementing a feature inspired by Git's tagging system.
-This will require you to research what a ``git tag'' is, understand its purpose and implementation, and then design and build a similar feature for the CAF project.
-Focus on making your code robust, well-documented, and consistent with the rest of the project.
+Your next challenge is to extend the CAF project by implementing a feature inspired by git's tagging system.
+This will require you to research what a git ``tag'' is, understand its purpose and implementation, and then design and build a similar feature for the CAF project.
+Focus on writing robust, documented code that is consistent with the rest of the project.
 
-\textbf{Objective:} Research, design, and implement a Git-style tagging system for the CAF project.
+\textbf{Objective:} Research, design, and implement a git-style tagging system for the CAF project.
 
 \textbf{Research phase:}
-Research Git's tagging system and document:
+Research git's tagging system and document:
 \vspace{-1em}
 \begin{itemize}
-    \item What are Git tags and how do they differ from branches?
-    \item Common use cases (releases, milestones, etc.)
+    \item What are git tags and how are they different from branches and commits?
+    \item Common use cases (releases, milestones, etc)
     \item Storage mechanism and relationship to commits
 \end{itemize}
 
 \textbf{Minimum implementation requirements:}
 \vspace{-1em}
 \begin{itemize}
-    \item \textbf{Data model:} Tag objects/structures to represent tags
+    \item \textbf{Data model:} Objects/data structures to represent tags
     \item \textbf{Storage:} File system representation (where/how tags are stored)
     \item \textbf{Operations:}
           \begin{itemize}
               \item List tags: \texttt{caf tags}
-              \item Create tag: \texttt{caf create\_tag <tagname> <commit-hash>}
-              \item Delete tag: \texttt{caf delete\_tag <tagname>}
+              \item Create tag: \texttt{caf create\_tag <tag name> <commit-hash>}
+              \item Delete tag: \texttt{caf delete\_tag <tag name>}
           \end{itemize}
     \item \textbf{CLI integration:} Add tag commands to existing CLI structure
     \item \textbf{Tests:} Unit tests for tag operations and CLI functionality (separate logic and CLI tests)
@@ -445,9 +446,9 @@ Research Git's tagging system and document:
 \begin{itemize}
     \item Follow existing code patterns and conventions
     \item Consider how tags interact with CAF's commit model
-    \item Think about edge cases (duplicate tags, invalid commits, etc.)
+    \item Think about error cases and edge cases (duplicate tags, invalid commits, etc.)
     \item Not every edge case needs to be handled, but you should document any limitations or assumptions in your design
-    \item Ensure your code is readable and maintainable
+    \item Ensure your code is readable, maintainable, documented and properly formatted
 \end{itemize}
 
 \textbf{Implementation guide:}
@@ -461,7 +462,7 @@ Research Git's tagging system and document:
     \item Integrate your code with the existing CLI system in a way that feels natural and consistent, and test the CLI commands manually
     \item Cover your implementation by writing tests for edge cases and error conditions that you can think of
     \item Document your code
-    \item There is no need to test that your core objects (e.g., tags) work, since if you followed the existing patterns, they should not be doing much
+    \item There is no need to test that your core objects work (e.g., tags), since if you followed the existing patterns, they should not be doing much
 \end{enumerate}
 
 \textbf{Deliverable:}
@@ -477,10 +478,10 @@ Research Git's tagging system and document:
 \adventuresection{GRADING}
 
 Your assignment will be evaluated on both absolute quality and relative performance.
-We assess the technical accuracy of your work, the clarity and depth of your explanations, and your adherence to assignment guidelines.
+We assess the technical accuracy of your work and the clarity and depth of your explanations.
 Additionally, your submission will be compared against other students' work to ensure fair and consistent grading standards.
 
-Points will be awarded for each task based on the following criteria:
+Grading is based on your code and written submission with the following criteria:
 \begin{center}
     \begin{tabular}{|l|c|p{6cm}|}
         \hline
@@ -492,9 +493,9 @@ Points will be awarded for each task based on the following criteria:
         \hline
         Task 3: Environment setup    & -               & -                                                 \\
         \hline
-        Task 4: Debugging fixes      & 20              & Correctness, clear explanations, minimal changes  \\
+        Task 4: Debugging fixes      & 20              & Correctness, clear explanations, logical changes  \\
         \hline
-        Task 5: Tag implementation   & 30              & Working feature, good design, comprehensive tests \\
+        Task 5: Tag implementation   & 30              & Working feature, thoughtful design, comprehensive tests \\
         \hline
         Code quality and style       & 10              & Follows patterns, readable, well-documented       \\
         \hline
