@@ -359,3 +359,201 @@ def test_head_commit_with_symbolic_ref_returns_hash_ref(temp_repo: Repository) -
     temp_repo.update_ref('heads/main', commit_ref)
 
     assert temp_repo.head_commit() == commit_ref
+
+
+def test_create_tag(temp_repo: Repository) -> None:
+    # Create a commit to tag
+    temp_file = temp_repo.working_dir / 'test_file.txt'
+    temp_file.write_text('Test content')
+    commit_ref = temp_repo.commit_working_dir('Author', 'Test commit')
+    
+    # Create a tag
+    tag_name = 'v1.0.0'
+    result = temp_repo.create_tag(tag_name, commit_ref)
+    
+    assert result == 0
+    tag_path = temp_repo.tags_dir() / tag_name
+    assert tag_path.exists()
+    assert tag_path.is_file()
+
+
+def test_create_tag_with_hash_ref(temp_repo: Repository) -> None:
+    # Create a commit to tag
+    temp_file = temp_repo.working_dir / 'test_file.txt'
+    temp_file.write_text('Test content')
+    commit_ref = temp_repo.commit_working_dir('Author', 'Test commit')
+    
+    # Create a tag using HashRef
+    tag_name = 'v1.0.0'
+    hash_ref = HashRef(commit_ref)
+    result = temp_repo.create_tag(tag_name, hash_ref)
+    
+    assert result == 0
+    tag_path = temp_repo.tags_dir() / tag_name
+    assert tag_path.exists()
+
+
+def test_create_tag_with_head_ref(temp_repo: Repository) -> None:
+    # Create a commit to tag
+    temp_file = temp_repo.working_dir / 'test_file.txt'
+    temp_file.write_text('Test content')
+    commit_ref = temp_repo.commit_working_dir('Author', 'Test commit')
+    
+    # Create a tag using HEAD reference
+    tag_name = 'v1.0.0'
+    result = temp_repo.create_tag(tag_name, 'HEAD')
+    
+    assert result == 0
+    tag_path = temp_repo.tags_dir() / tag_name
+    assert tag_path.exists()
+
+
+def test_create_tag_with_branch_ref(temp_repo: Repository) -> None:
+    # Create a commit to tag
+    temp_file = temp_repo.working_dir / 'test_file.txt'
+    temp_file.write_text('Test content')
+    commit_ref = temp_repo.commit_working_dir('Author', 'Test commit')
+    
+    # Create a tag using branch reference (needs full path)
+    tag_name = 'v1.0.0'
+    branch_ref_obj = branch_ref(DEFAULT_BRANCH)
+    result = temp_repo.create_tag(tag_name, branch_ref_obj)
+    
+    assert result == 0
+    tag_path = temp_repo.tags_dir() / tag_name
+    assert tag_path.exists()
+
+
+def test_create_tag_empty_name_raises_error(temp_repo: Repository) -> None:
+    temp_file = temp_repo.working_dir / 'test_file.txt'
+    temp_file.write_text('Test content')
+    commit_ref = temp_repo.commit_working_dir('Author', 'Test commit')
+    
+    with raises(ValueError, match='Tag name is required'):
+        temp_repo.create_tag('', commit_ref)
+
+
+def test_create_tag_none_ref_raises_error(temp_repo: Repository) -> None:
+    with raises(ValueError, match='Commit reference is required'):
+        temp_repo.create_tag('v1.0.0', None)  # type: ignore
+
+
+def test_create_tag_invalid_ref_raises_error(temp_repo: Repository) -> None:
+    # resolve_ref raises RefError for invalid refs, which propagates through create_tag
+    with raises(RefError, match='Invalid reference'):
+        temp_repo.create_tag('v1.0.0', 'invalid_ref_12345')
+
+
+def test_create_tag_duplicate_raises_error(temp_repo: Repository) -> None:
+    temp_file = temp_repo.working_dir / 'test_file.txt'
+    temp_file.write_text('Test content')
+    commit_ref = temp_repo.commit_working_dir('Author', 'Test commit')
+    
+    tag_name = 'v1.0.0'
+    temp_repo.create_tag(tag_name, commit_ref)
+    
+    with raises(RepositoryError, match='already exists'):
+        temp_repo.create_tag(tag_name, commit_ref)
+
+
+def test_delete_tag(temp_repo: Repository) -> None:
+    # Create a commit and tag
+    temp_file = temp_repo.working_dir / 'test_file.txt'
+    temp_file.write_text('Test content')
+    commit_ref = temp_repo.commit_working_dir('Author', 'Test commit')
+    
+    tag_name = 'v1.0.0'
+    temp_repo.create_tag(tag_name, commit_ref)
+    
+    tag_path = temp_repo.tags_dir() / tag_name
+    assert tag_path.exists()
+    
+    # Delete the tag
+    temp_repo.delete_tag(tag_name)
+    
+    assert not tag_path.exists()
+
+
+def test_delete_tag_empty_name_raises_error(temp_repo: Repository) -> None:
+    with raises(ValueError, match='Tag name is required'):
+        temp_repo.delete_tag('')
+
+
+def test_delete_tag_nonexistent_raises_error(temp_repo: Repository) -> None:
+    with raises(RepositoryError, match='does not exist'):
+        temp_repo.delete_tag('nonexistent_tag')
+
+
+def test_tags_list_empty(temp_repo: Repository) -> None:
+    tag_list = temp_repo.tags()
+    assert tag_list == []
+
+
+def test_tags_list_single(temp_repo: Repository) -> None:
+    # Create a commit and tag
+    temp_file = temp_repo.working_dir / 'test_file.txt'
+    temp_file.write_text('Test content')
+    commit_ref = temp_repo.commit_working_dir('Author', 'Test commit')
+    
+    tag_name = 'v1.0.0'
+    temp_repo.create_tag(tag_name, commit_ref)
+    
+    tag_list = temp_repo.tags()
+    assert tag_name in tag_list
+    assert len(tag_list) == 1
+
+
+def test_tags_list_multiple(temp_repo: Repository) -> None:
+    # Create commits and multiple tags
+    temp_file = temp_repo.working_dir / 'test_file.txt'
+    temp_file.write_text('Test content')
+    commit_ref1 = temp_repo.commit_working_dir('Author', 'First commit')
+    
+    temp_file.write_text('Updated content')
+    commit_ref2 = temp_repo.commit_working_dir('Author', 'Second commit')
+    
+    tag_names = ['v1.0.0', 'v1.1.0', 'v2.0.0']
+    temp_repo.create_tag(tag_names[0], commit_ref1)
+    temp_repo.create_tag(tag_names[1], commit_ref1)
+    temp_repo.create_tag(tag_names[2], commit_ref2)
+    
+    tag_list = temp_repo.tags()
+    assert len(tag_list) == 3
+    for tag_name in tag_names:
+        assert tag_name in tag_list
+
+
+def test_tags_list_after_delete(temp_repo: Repository) -> None:
+    # Create commits and tags
+    temp_file = temp_repo.working_dir / 'test_file.txt'
+    temp_file.write_text('Test content')
+    commit_ref = temp_repo.commit_working_dir('Author', 'Test commit')
+    
+    tag_names = ['v1.0.0', 'v1.1.0', 'v2.0.0']
+    for tag_name in tag_names:
+        temp_repo.create_tag(tag_name, commit_ref)
+    
+    # Delete one tag
+    temp_repo.delete_tag(tag_names[1])
+    
+    tag_list = temp_repo.tags()
+    assert len(tag_list) == 2
+    assert tag_names[0] in tag_list
+    assert tag_names[1] not in tag_list
+    assert tag_names[2] in tag_list
+
+
+def test_tags_dir_created_on_tag_creation(temp_repo: Repository) -> None:
+    # Tags directory is created during init(), so it should already exist
+    # But we can verify it exists and is a directory
+    tags_dir = temp_repo.tags_dir()
+    assert tags_dir.exists()
+    assert tags_dir.is_dir()
+    
+    # Verify we can still create tags
+    temp_file = temp_repo.working_dir / 'test_file.txt'
+    temp_file.write_text('Test content')
+    commit_ref = temp_repo.commit_working_dir('Author', 'Test commit')
+    
+    result = temp_repo.create_tag('v1.0.0', commit_ref)
+    assert result == 0

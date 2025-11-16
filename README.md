@@ -322,6 +322,180 @@ If you encounter issues:
 
 *Built with ❤️ for learning systems programming and version control internals*
 
-## Note about Tree canonicalization change
 
-If you modify the C++ `Tree` type from `std::unordered_map` to `std::map` (so entries are iterated in sorted order), a few small follow-ups are required: update `libcaf/src/tree.h` to store a `std::map`, update `libcaf/src/object_io.cpp` to construct a `std::map` when loading trees, and update the pybind11 binding in `libcaf/src/bind.cpp` to accept `std::map<std::string, TreeRecord>` (or add an overload that converts from `std::unordered_map`). After making these changes you must rebuild/install the `libcaf` extension so Python imports the updated C++ types (e.g., `make deploy-libcaf` inside the container). This ensures tree serialization/hashing is canonical (sorted) and that Python tests depending on deterministic ordering pass.
+## 📋 Test Documentation
+
+This section documents all tests in the project, organized by component and functionality.
+
+### Repository Tests (`tests/libcaf/test_repository.py`)
+
+#### Repository Initialization
+- `test_init_with_custom_repo_dir` - Tests repository initialization with a custom repository directory name
+
+#### Commit Operations
+- `test_commit` - Tests basic commit creation with author and message
+- `test_commit_with_parent` - Tests commit creation with parent commit reference
+- `test_commit_working_dir_empty_author_or_message_raises_error` - Tests error handling for empty author or message
+
+#### Directory and File Operations
+- `test_save_dir` - Tests saving directory structure to repository
+- `test_save_dir_invalid_path_raises_error` - Tests error handling for invalid directory paths
+
+#### Log and History
+- `test_head_log` - Tests commit log retrieval from HEAD
+- `test_log_corrupted_commit_raises_error` - Tests error handling for corrupted commit objects
+
+#### Reference Operations
+- `test_refs_directory_not_exists_raises_error` - Tests error when refs directory doesn't exist
+- `test_refs_directory_is_file_raises_error` - Tests error when refs path is a file instead of directory
+- `test_resolve_ref_invalid_string_raises_error` - Tests error handling for invalid reference strings
+- `test_resolve_ref_invalid_type_raises_error` - Tests error handling for invalid reference types
+- `test_update_ref_nonexistent_reference_raises_error` - Tests error when updating non-existent reference
+- `test_head_ref_missing_head_file_raises_error` - Tests error when HEAD file is missing
+- `test_head_commit_with_symbolic_ref_returns_hash_ref` - Tests HEAD commit resolution with symbolic references
+
+#### Branch Operations
+- `test_add_empty_branch_name_raises_error` - Tests error handling for empty branch names
+- `test_add_branch_already_exists_raises_error` - Tests error when creating duplicate branch
+- `test_delete_empty_branch_name_raises_error` - Tests error handling for empty branch names on delete
+- `test_delete_nonexistent_branch_name_raises_error` - Tests error when deleting non-existent branch
+- `test_delete_last_branch_name_raises_error` - Tests error when attempting to delete the last branch
+
+#### Diff Operations
+- `test_diff_commits_corrupted_commit_raises_error` - Tests error handling for corrupted commits in diff
+- `test_diff_commits_corrupted_tree_raises_error` - Tests error handling for corrupted tree objects in diff
+- `test_diff_commits_corrupted_subtree_raises_error` - Tests error handling for corrupted subtree objects in diff
+
+#### Repository Management
+- `test_delete_repo_removes_repository` - Tests repository deletion functionality
+
+#### Tag Operations (Repository Level)
+- `test_create_tag` - Tests basic tag creation with commit reference
+- `test_create_tag_with_hash_ref` - Tests tag creation using HashRef object
+- `test_create_tag_with_head_ref` - Tests tag creation using HEAD reference string
+- `test_create_tag_with_branch_ref` - Tests tag creation using branch name reference
+- `test_create_tag_empty_name_raises_error` - Tests error handling for empty tag names
+- `test_create_tag_none_ref_raises_error` - Tests error handling when reference is None
+- `test_create_tag_invalid_ref_raises_error` - Tests error handling for invalid/unresolvable references
+- `test_create_tag_duplicate_raises_error` - Tests error when creating duplicate tag
+- `test_delete_tag` - Tests tag deletion functionality
+- `test_delete_tag_empty_name_raises_error` - Tests error handling for empty tag names on delete
+- `test_delete_tag_nonexistent_raises_error` - Tests error when deleting non-existent tag
+- `test_tags_list_empty` - Tests listing tags when no tags exist (returns empty list)
+- `test_tags_list_single` - Tests listing tags with a single tag
+- `test_tags_list_multiple` - Tests listing tags with multiple tags
+- `test_tags_list_after_delete` - Tests tag listing after deleting a tag
+- `test_tags_dir_created_on_tag_creation` - Tests that tags directory is created automatically on first tag creation
+
+### CLI Command Tests
+
+#### Init Command (`tests/caf/cli_commands/test_init_command.py`)
+- Tests repository initialization via CLI
+
+#### Commit Command (`tests/caf/cli_commands/test_commit_command.py`)
+- Tests commit creation via CLI with various parameters
+
+#### Branch Commands
+- `test_add_branch_command.py` - Tests branch creation via CLI
+  - `test_add_branch_command` - Basic branch creation
+  - `test_add_branch_missing_name` - Error handling for missing branch name
+  - `test_add_branch_twice` - Error handling for duplicate branch
+  - `test_add_branch_no_repo` - Error handling when repository doesn't exist
+
+- `test_branch_command.py` - Tests branch listing via CLI
+  - `test_branch_command` - Lists all branches
+  - `test_branch_no_repo` - Error handling when repository doesn't exist
+  - `test_branch_no_branches` - Behavior when no branches exist
+  - `test_branch_repo_error` - Error handling for repository errors
+  - `test_branch_shows_current_branch_with_asterisk` - Tests current branch marking with asterisk
+
+- `test_delete_branch_command.py` - Tests branch deletion via CLI
+
+- `test_branch_exists_command.py` - Tests branch existence checking via CLI
+
+#### Hash File Command (`tests/caf/cli_commands/test_hash_file_command.py`)
+- Tests file hashing operations via CLI
+
+#### Log Command (`tests/caf/cli_commands/test_log_command.py`)
+- Tests commit log display via CLI
+
+#### Diff Command (`tests/caf/cli_commands/test_diff_command.py`)
+- Tests commit diff operations via CLI
+
+#### Delete Repo Command (`tests/caf/cli_commands/test_delete_repo_command.py`)
+- Tests repository deletion via CLI
+
+#### Tag Commands (CLI Level)
+
+- `test_create_tag_command.py` - Tests tag creation via CLI
+  - `test_create_tag_command` - Basic tag creation with commit hash
+  - `test_create_tag_with_head_ref` - Tag creation using HEAD reference
+  - `test_create_tag_missing_name` - Error handling for missing tag name
+  - `test_create_tag_missing_ref` - Error handling for missing reference
+  - `test_create_tag_duplicate` - Error handling for duplicate tag creation
+  - `test_create_tag_invalid_ref` - Error handling for invalid reference
+  - `test_create_tag_no_repo` - Error handling when repository doesn't exist
+  - `test_create_tag_success_message` - Tests success message output
+
+- `test_delete_tag_command.py` - Tests tag deletion via CLI
+  - `test_delete_tag_command` - Basic tag deletion
+  - `test_delete_tag_missing_name` - Error handling for missing tag name
+  - `test_delete_tag_nonexistent` - Error handling for non-existent tag
+  - `test_delete_tag_no_repo` - Error handling when repository doesn't exist
+  - `test_delete_tag_success_message` - Tests success message output
+
+- `test_tags_command.py` - Tests tag listing via CLI
+  - `test_tags_command_empty` - Lists tags when no tags exist
+  - `test_tags_command_single` - Lists tags with a single tag
+  - `test_tags_command_multiple` - Lists tags with multiple tags
+  - `test_tags_command_after_delete` - Lists tags after deletion
+  - `test_tags_command_no_repo` - Error handling when repository doesn't exist
+  - `test_tags_command_output_format` - Tests output format and structure
+
+### Core Library Tests
+
+#### Content Tests (`tests/libcaf/test_content.py`)
+- Tests content hashing and storage operations
+
+#### Diff Tests (`tests/libcaf/test_diff.py`)
+- Tests diff computation between commits and trees
+
+#### Hashing Tests (`tests/libcaf/test_hashing.py`)
+- Tests hash function implementations and correctness
+
+#### Object I/O Tests (`tests/libcaf/test_object_io.py`)
+- Tests object serialization and deserialization
+
+#### Object Tests (`tests/libcaf/test_objects.py`)
+- Tests core object types (blob, tree, commit)
+
+#### Reference Tests (`tests/libcaf/test_ref.py`)
+- Tests reference reading, writing, and resolution
+
+### Test Coverage Summary
+
+The test suite provides comprehensive coverage for:
+
+1. **Repository Operations**: Initialization, commits, branches, tags, references
+2. **CLI Commands**: All user-facing commands with error handling
+3. **Core Library**: Hashing, object I/O, references, content management
+4. **Error Handling**: Invalid inputs, missing resources, corrupted data
+5. **Edge Cases**: Empty states, duplicates, boundary conditions
+
+### Running Tests
+
+To run all tests:
+```bash
+make test
+```
+
+To run specific test files:
+```bash
+pytest tests/libcaf/test_repository.py
+pytest tests/caf/cli_commands/test_create_tag_command.py
+```
+
+To run with coverage:
+```bash
+make test ENABLE_COVERAGE=1
+```
