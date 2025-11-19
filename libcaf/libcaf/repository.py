@@ -476,10 +476,38 @@ class Repository:
             records1 = current_tree1.records if current_tree1 else {}
             records2 = current_tree2.records if current_tree2 else {}
 
-            for name, record1 in records1.items():
-                if name not in records2:
-                    local_diff: Diff
+            # Get all record names and sort them for deterministic ordering
+            all_names = sorted(set(records1.keys()) | set(records2.keys()))
 
+            for name in all_names:
+                record1 = records1.get(name)
+                record2 = records2.get(name)
+
+                if record1 is None:
+                    # This name is in the new tree but not in the old tree, so it was either
+                    # added or moved
+                    # If we've already seen this hash, it was moved, so convert the original
+                    # removed diff to a moved diff
+                    if record2.hash in potentially_removed:
+                        removed_diff = potentially_removed[record2.hash]
+                        del potentially_removed[record2.hash]
+
+                        local_diff = MovedFromDiff(record2, parent_diff, [], None)
+                        moved_to_diff = MovedToDiff(removed_diff.record, removed_diff.parent, [], local_diff)
+                        local_diff.moved_from = moved_to_diff
+
+                        # Replace the original removed diff with a moved-to diff
+                        removed_diff.parent.children = (
+                            [_ if _.record.hash != record2.hash
+                             else moved_to_diff
+                             for _ in removed_diff.parent.children])
+
+                    else:
+                        local_diff = AddedDiff(record2, parent_diff, [])
+                        potentially_added[record2.hash] = local_diff
+
+                    parent_diff.children.append(local_diff)
+                elif record2 is None:
                     # This name is no longer in the tree, so it was either moved or removed
                     # Have we seen this hash before as a potentially-added record?
                     if record1.hash in potentially_added:
@@ -502,9 +530,8 @@ class Repository:
 
                     parent_diff.children.append(local_diff)
                 else:
-                    record2 = records2[name]
-
-                    # This record is identical in both trees, so no diff is needed
+                    # This record exists in both trees
+                    # If the record is identical in both trees, so no diff is needed
                     if record1.hash == record2.hash:
                         continue
 
@@ -524,32 +551,6 @@ class Repository:
                     else:
                         modified_diff = ModifiedDiff(record1, parent_diff, [])
                         parent_diff.children.append(modified_diff)
-
-            for name, record2 in records2.items():
-                if name not in records1:
-                    # This name is in the new tree but not in the old tree, so it was either
-                    # added or moved
-                    # If we've already seen this hash, it was moved, so convert the original
-                    # added diff to a moved diff
-                    if record2.hash in potentially_removed:
-                        removed_diff = potentially_removed[record2.hash]
-                        del potentially_removed[record2.hash]
-
-                        local_diff = MovedFromDiff(record2, parent_diff, [], None)
-                        moved_to_diff = MovedToDiff(removed_diff.record, removed_diff.parent, [], local_diff)
-                        local_diff.moved_from = moved_to_diff
-
-                        # Create a new diff for the moved record
-                        removed_diff.parent.children = (
-                            [_ if _.record.hash != record2.hash
-                             else moved_to_diff
-                             for _ in removed_diff.parent.children])
-
-                    else:
-                        local_diff = AddedDiff(record2, parent_diff, [])
-                        potentially_added[record2.hash] = local_diff
-
-                    parent_diff.children.append(local_diff)
 
         return top_level_diff.children
 
